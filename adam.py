@@ -56,3 +56,22 @@ def train(model,optimizer,loss_fct=torch.nn.NLLLoss(),nb_epochs=5,batch_size=128
         log_prob=model(torch.from_numpy(x).to(device))
         loss=loss_fct(log_prob,torch.from_numpy(y).to(device))
         optimizer.zero_grad()
+
+        if epoch%100==0:
+            model.train(mode=False)
+            log_prob=model(torch.from_numpy(testX.reshape(-1,28*28))).to(device)
+            testing_accuracy.append(
+                (log_prob.argmax(-1) == torch.from_numpy(testy).to(device)).sum().item() / testy.shape[0])
+            model.train(mode=True)
+
+        return testing_accuracy
+    
+if __name__=="__main__":
+    device='cuda' if torch.cuda.is_available() else 'cpu'
+    labels=["Pytorch adam","THis implementation"]
+    for i,optim in enumerate([torch.optim.Adam,Adam]):
+        model=torch.nn.Sequential(nn.Dropout(p=0.4),
+                                  nn.Linear(28*28,1200),
+                                  nn.Dropout(p=0.4),
+                                  nn.Linear(1200,10),
+                                  nn.LogSoftmax(dim=-1))
