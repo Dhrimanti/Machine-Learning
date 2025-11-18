@@ -50,4 +50,9 @@ class Adam:
 def train(model,optimizer,loss_fct=torch.nn.NLLLoss(),nb_epochs=5,batch_size=128):
     testing_accuracy=[]
     for epoch in range(nb_epochs):
-        indices=torch
+        indices=torch.randperm(trainX.shape[0],[:batch_size])
+        x=trainX[indices].reshape(-1,28*28)
+        y=trainy[indices]
+        log_prob=model(torch.from_numpy(x).to(device))
+        loss=loss_fct(log_prob,torch.from_numpy(y).to(device))
+        optimizer.zero_grad()
