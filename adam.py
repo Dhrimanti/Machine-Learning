@@ -50,12 +50,14 @@ class Adam:
 def train(model,optimizer,loss_fct=torch.nn.NLLLoss(),nb_epochs=5,batch_size=128):
     testing_accuracy=[]
     for epoch in range(nb_epochs):
-        indices=torch.randperm(trainX.shape[0],[:batch_size])
+        indices = torch.randperm(trainX.shape[0])[:batch_size]
         x=trainX[indices].reshape(-1,28*28)
         y=trainy[indices]
         log_prob=model(torch.from_numpy(x).to(device))
         loss=loss_fct(log_prob,torch.from_numpy(y).to(device))
         optimizer.zero_grad()
+        loss.backward()
+        optimizer.step()
 
         if epoch%100==0:
             model.train(mode=False)
@@ -64,7 +66,7 @@ def train(model,optimizer,loss_fct=torch.nn.NLLLoss(),nb_epochs=5,batch_size=128
                 (log_prob.argmax(-1) == torch.from_numpy(testy).to(device)).sum().item() / testy.shape[0])
             model.train(mode=True)
 
-        return testing_accuracy
+    return testing_accuracy
     
 if __name__=="__main__":
     device='cuda' if torch.cuda.is_available() else 'cpu'
@@ -74,4 +76,12 @@ if __name__=="__main__":
                                   nn.Linear(28*28,1200),
                                   nn.Dropout(p=0.4),
                                   nn.Linear(1200,10),
-                                  nn.LogSoftmax(dim=-1))
+                                  nn.LogSoftmax(dim=-1)).to(device)
+        optimizer=optim(model if i==1 else model.parameters())
+        testing_accuracy=train(model,optimizer, nb_epochs=1000)
+        plt.plot(testing_accuracy,label=labels[i])
+    plt.legend()
+    plt.xlabel('Epochs (x100)')
+    plt.ylabel('Testing accuracy', fontsize=14)
+    plt.savefig('adam.png', bbox_inches='tight')
+    plt.show()
