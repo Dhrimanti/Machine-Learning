@@ -43,13 +43,20 @@ class GRUCell(nn.Module):
             self.register_parameter('b_r',None)
             self.register_parameter('b_h',None) 
 
-        def reset(self):
-            stdv=1/np.sqrt(self.hidden_size)
-            for i in self.parameters():
-                i.data.uniform_(-stdv,stdv)
+    def reset(self):
+        stdv=1/np.sqrt(self.hidden_size)
+        for i in self.parameters():
+            i.data.uniform_(-stdv,stdv)
 
-        def forwards(self,x,h,prev=None):
-            if prev is None:
-                
+    def forward(self,x,prev=None):
+        if prev is None:
+            prev=torch.zeros(x.size(0),self.hidden_size,dtype=x.dtype,device=x.device)
+        z = torch.sigmoid(torch.matmul(x, self.W_z.t()) + torch.matmul(prev, self.U_z.t()) + self.b_z)
+        r = torch.sigmoid(torch.matmul(x, self.W_r.t()) + torch.matmul(prev, self.U_r.t()) + self.b_r)
+        hidden = torch.tanh(torch.matmul(x, self.W_h.t()) + torch.matmul(r * prev, self.U_h.t()) + self.b_h)
+
+        h_last=(1-z)*hidden+z*prev
+        return h_last
+
 
 
