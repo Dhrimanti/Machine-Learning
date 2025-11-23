@@ -43,5 +43,13 @@ class GRUCell(nn.Module):
             self.register_parameter('b_r',None)
             self.register_parameter('b_h',None) 
 
-        
+        def reset(self):
+            stdv=1/np.sqrt(self.hidden_size)
+            for i in self.parameters():
+                i.data.uniform_(-stdv,stdv)
+
+        def forwards(self,x,h,prev=None):
+            if prev is None:
+                
+
 
