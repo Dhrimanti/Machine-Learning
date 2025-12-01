@@ -3,7 +3,7 @@ import torch.nn as nn
 import torch.nn.functional as F
 import torch.optim as optim
 import numpy as np
-import torch.nn as nn
+
 import tqdm as tqdm
 import seaborn as sns
 import matplotlib.pyplot as plt
@@ -104,4 +104,26 @@ def train(model,optimizer,loss_fct=torch.nn.NLLLoss(),nb_epochs=500,batch_size=1
         total_loss=0
         for batch_idx,(data,target) in enumerate(train_loader):
             optimizer.zero_grad()
+            output=model(data)
+            loss=loss_fct(output,target)
+            loss.backward()
+            optimizer.step()
+            total_loss+=loss.item()
+    return total_loss
 
+class Model(nn.Module):
+    def __init__(self,vocab_size,embedding_dim,hidden_dim,use_custom=False):
+        super(Model,self).__init__()
+        self.use_custom=use_custom
+        self.hidden_dim=hidden_dim
+        self.embedding=nn.Embedding(vocab_size,embedding_dim,padding_idx=0)
+        if self.use_custom:
+            self.gru=GRUCell(embedding_dim,hidden_dim)
+        else:
+            self.gru=nn.GRU(embedding_dim,hidden_dim,batch_first=True)
+        self.fc=nn.Linear(hidden_dim,2)
+
+    def forward(self,x):
+        embedded=self.embedding(x)
+        if self.use_custom:
+            batch_size=embedded.size()
