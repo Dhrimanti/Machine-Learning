@@ -127,3 +127,4 @@ class Model(nn.Module):
         embedded=self.embedding(x)
         if self.use_custom:
             batch_size=embedded.size()
+            h=torch.zeros(batch_size,self.hidden_dim)
