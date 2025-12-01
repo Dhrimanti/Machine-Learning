@@ -19,11 +19,9 @@ sns.set_theme()
 trainX = np.float32(trainX) / 255
 testX = np.float32(testX) / 255
 
-def preprocess_imdb(batch_size=32, max_length=500):
+def preprocess_imdb(batch_size=32, max_length=150):
     tokenizer = get_tokenizer('basic_english')
-    
     train_iter = IMDB(split='train')
-    test_iter = IMDB(split='test')
     
     def yield_tokens(data_iter):
         for _, text in data_iter:
@@ -49,11 +47,10 @@ def preprocess_imdb(batch_size=32, max_length=500):
         
         return text_list, label_list
     
+    train_iter = IMDB(split='train') 
     train_loader = DataLoader(list(train_iter), batch_size=batch_size, shuffle=True, collate_fn=collate_batch)
-    test_loader = DataLoader(list(test_iter), batch_size=batch_size, shuffle=False, collate_fn=collate_batch)
     
-    return train_loader, test_loader, vocab, len(vocab)
-
+    return train_loader, len(vocab)
 train_loader, test_loader, vocab, vocab_size = preprocess_imdb(batch_size=32)
 
 class GRUCell(nn.Module):
@@ -126,5 +123,46 @@ class Model(nn.Module):
     def forward(self,x):
         embedded=self.embedding(x)
         if self.use_custom:
-            batch_size=embedded.size()
+            batch_size,seq_len=embedded.size()
             h=torch.zeros(batch_size,self.hidden_dim)
+            for i in range(seq_len):
+                h=self.gru(embedded[:,i,:],h)
+            return self.fc(h)
+        else:
+            _,h_n=self.gru(embedded)
+            return self.fc(h_n.squeeze(0))
+        
+
+def training(use_custom,train_loader,vocab_size):
+    model=Model(vocab_size,100,128,use_custom=use_custom)
+    optimizer=optim.Adam(model.parameters(),lr=0.001)
+    criterion=nn.CrossEntropyLoss()
+
+    losses=[]
+    model.train()
+    for i in range(100):
+        epoch_loss=0
+        for text,label in train_loader:
+            text,labels=text,label
+            optimizer.zero_grad()
+            output=model(text)
+            loss=criterion(output,labels)
+            loss.backward()
+            optimizer.step()
+            epoch_loss+=loss.item()
+        losses.append(epoch_loss/len(train_loader))
+
+    return losses
+train_loader, vocab_size = preprocess_imdb(batch_size=64)
+
+torch_losses = training(False, train_loader, vocab_size)
+custom_losses = training(True, train_loader, vocab_size)
+
+print("\nRESULTS:")
+print(f"PyTorch GRU Final Loss: {torch_losses[-1]:.4f}")
+print(f"Custom GRU Final Loss: {custom_losses[-1]:.4f}")
+
+plt.plot(torch_losses, label='PyTorch GRU')
+plt.plot(custom_losses, label='Custom GRU')
+plt.legend()
+plt.show()
