@@ -16,4 +16,10 @@ class MLP(nn.module):
                                    nn.Linear(h,out_dim))
         def forward(self,x,context):
             return self.network(torch.cat((x,context),dim=1))
-        
+class Dataset(torch.utils.data.Dataset):
+    def __init__(self,dist1,dist2):
+        self.dist1=dist1
+        self.dist2=dist2
+        assert self.dist1.shape==self.dist2.shape
+
+    def __len__(self):
