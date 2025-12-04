@@ -49,3 +49,18 @@ def train_rectified(rectified_flow,optimizer,train_loader,NB_EPC,eps=1e-15):
             optimizer.zero_grad()
             loss.backward()
             optimizer.step()
+
+
+def sample(rectified_flow,T,pi_0):
+    samples=[pi_0.clone().unsqueeze(0)]
+    for i in range(T):
+        t=torch.ones((pi_0.shape[0],1)),device=samples[-1].device) * i / T
+        drift_pred=rectified_flow(samples[-1].squeeze(0),t)
+        samples.append(samples[-1]+drift_pred/(T))
+    return torch.cat(samples)
+
+
+    if __name__=="__main__":
+        batch_size=2048
+        dataset_size=10_000
+        nb_epochs=2000
