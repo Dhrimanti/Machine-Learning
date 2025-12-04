@@ -64,3 +64,9 @@ def sample(rectified_flow,T,pi_0):
         batch_size=2048
         dataset_size=10_000
         nb_epochs=2000
+        wd=0.01
+        theta=np.array([0.,60,120,180,240,300])/360*2*np.pi
+        std=0.5
+        radius=12
+        modes=np.array([(radius*x,radius*y) for x,y in zip(np.cos(theta),np.sin(theta))])
+        pi_0=sample_multimodal_distribution(modes,std,batch_size)
