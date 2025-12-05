@@ -70,3 +70,12 @@ def sample(rectified_flow,T,pi_0):
         radius=12
         modes=np.array([(radius*x,radius*y) for x,y in zip(np.cos(theta),np.sin(theta))])
         pi_0=sample_multimodal_distribution(modes,std,batch_size)
+        radius=5
+        modes=np.array([(radius*x,radius*y) for x,y in zip(np.cos(theta),np.sin(theta))])
+        pi_1=sample_multimodal_distribution(modes,std,dataset_size)
+        rectified_flow=MLP(2,1,64,2).to(device)
+        optimizer = torch.optim.Adam(rectified_flow.parameters(), lr=5e-3)
+        dataset=Dataset(pi_0,pi_1)
+        train_dataloader=DataLoader(dataset,batch_size=batch_size,shuffle=True,num_workers=0)
+        training_loss=train_rectified(rectified_flow,optimizer,train_dataloader,NB_EPOCHS,eps=1e-15)
+        for idx,theta in enumerate([])
