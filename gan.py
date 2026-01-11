@@ -67,5 +67,16 @@ if  __name__=="__main__":
     generator=Generator()
     optimizer_d=optim.SGD(discriminator.parameters(),lr=0.1,momentum=0.5)
     optimizer_g=optim.SGD(generator.parameters(),lr=0.1,momentum=0.5)
+    loss=train(generator,discriminator,optimizer_g,optimizer_d,5000,batch_size=100)
+    NB_IMAGES=25
+    z=sample_noise(NB_IMAGES)
+    x=generator(z)
+    plt.figue(figsize=(20,20))
+    for i in range(NB_IMAGES):
+        plt.subplot(5,5,1+i)
+        plt.axis('off')
+        plt.imshow(x[i].data.cpu().numpy().reshape(28, 28), cmap='gray')
+    plt.savefig("Imgs/regenerated_MNIST_data.png")
+    plt.show()
 
 
