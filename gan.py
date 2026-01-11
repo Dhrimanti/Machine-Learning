@@ -44,7 +44,7 @@ class Discriminator(nn.Module):
             nn.LeakyReLU(negative_slope=0.2),
             nn.Linear(hidden_dim,hidden_dim),
             nn.LeakyReLU(negative_slope=0.2),
-            nn.Li
+            nn.Sigmoid()
         )
     def forward(self,x):
         return self.network(x)
