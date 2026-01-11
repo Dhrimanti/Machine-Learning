@@ -65,6 +65,7 @@ def train(generator,discriminator,generator_optimizer,discriminator_optimizer,nb
 if  __name__=="__main__":
     discriminator=Discriminator()
     generator=Generator()
-    optimizer_d=optim.SGD
+    optimizer_d=optim.SGD(discriminator.parameters(),lr=0.1,momentum=0.5)
+    optimizer_g=optim.SGD(generator.parameters(),lr=0.1,momentum=0.5)
 
 
