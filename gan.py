@@ -62,5 +62,9 @@ def train(generator,discriminator,generator_optimizer,discriminator_optimizer,nb
             loss.backward()
             discriminator_optimizer.step()
             training_loss['discriminative'].append(loss.item())
+if  __name__=="__main__":
+    discriminator=Discriminator()
+    generator=Generator()
+    optimizer_d=optim.SGD
 
 
