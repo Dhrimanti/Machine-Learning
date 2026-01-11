@@ -56,5 +56,7 @@ def train(generator,discriminator,generator_optimizer,discriminator_optimizer,nb
             z=sample_noise(batch_size)
             x=get_minibatch(batch_size)
             f_loss=torch.nn.BCELoss()(discriminator(generator(z))).reshape(batch_size),torch.zeros(batch_size)
+            r_loss=torch.nn.BCELoss()(discriminator(x).reshape(batch_size),torch.ones(batch_size))
+            loss=(r_loss+f_loss)/2
 
 
