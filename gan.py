@@ -26,10 +26,12 @@ class Generator(nn.Module):
         super(Generator,self).__init__()
         self.network=nn.Sequential(
             nn.Linear(input_dim,hidden_dim),
+            nn.BatchNorm1d(hidden_dim),
             nn.ReLU(),
-            nn.Linear(hidden_dim,hidden_dim),
+            nn.Linear(hidden_dim,hidden_dim*2),
+            nn.BatchNorm1d(hidden_dim*2),
             nn.ReLU(),
-            nn.Linear(hidden_dim,output_dim),
+            nn.Linear(hidden_dim*2,output_dim),
             nn.Tanh(),
 
         )
@@ -42,36 +44,51 @@ class Discriminator(nn.Module):
         self.network=nn.Sequential(
             nn.Linear(input_dim,hidden_dim),
             nn.LeakyReLU(negative_slope=0.2),
-            nn.Linear(hidden_dim,hidden_dim),
+            nn.Dropout(0.3),
+            nn.Linear(hidden_dim,hidden_dim//2),
             nn.LeakyReLU(negative_slope=0.2),
+            nn.Dropout(0.3),
+            nn.Linear(hidden_dim//2,output_dim),
             nn.Sigmoid()
         )
     def forward(self,x):
         return self.network(x)
     
 def train(generator,discriminator,generator_optimizer,discriminator_optimizer,nb_epoch,k=1,batch_size=100):
+    criterion=torch.nn.BCELoss()
     training_loss={'generative':[],"discriminative":[]}
     for i in tqdm(range(nb_epoch)):
-        for i in range(k):
+        for j in range(k):
             z=sample_noise(batch_size)
             x=get_minibatch(batch_size)
-            f_loss=torch.nn.BCELoss()(discriminator(generator(z))).reshape(batch_size),torch.zeros(batch_size)
-            r_loss=torch.nn.BCELoss()(discriminator(x).reshape(batch_size),torch.ones(batch_size))
-            loss=(r_loss+f_loss)/2
+            real_preds=discriminator(x).squeeze()
+            fake_preds=discriminator(generator(z).detach()).squeeze()
+            r_loss=criterion(real_preds,torch.ones_like(real_preds))
+            f_loss=criterion(fake_preds,torch.zeros_like(fake_preds))
+            d_loss=(r_loss+f_loss)/2
             discriminator_optimizer.zero_grad()
-            loss.backward()
+            d_loss.backward()
             discriminator_optimizer.step()
-            training_loss['discriminative'].append(loss.item())
+            training_loss['discriminative'].append(d_loss.item())
+        z=sample_noise(batch_size)
+        fake_preds=discriminator(generator(z)).view(-1)
+        g_loss=criterion(fake_preds,torch.ones(batch_size))
+        generator_optimizer.zero_grad()
+        g_loss.backward()
+        generator_optimizer.step()
+        training_loss['generative'].append(g_loss.item())
+    return training_loss
+        
 if  __name__=="__main__":
     discriminator=Discriminator()
     generator=Generator()
-    optimizer_d=optim.SGD(discriminator.parameters(),lr=0.1,momentum=0.5)
-    optimizer_g=optim.SGD(generator.parameters(),lr=0.1,momentum=0.5)
+    optimizer_d=optim.Adam(discriminator.parameters(),lr=0.0002,betas=(0.5,0.999))
+    optimizer_g=optim.Adam(generator.parameters(),lr=0.0002,betas=(0.5,0.999))
     loss=train(generator,discriminator,optimizer_g,optimizer_d,5000,batch_size=100)
     NB_IMAGES=25
     z=sample_noise(NB_IMAGES)
     x=generator(z)
-    plt.figue(figsize=(20,20))
+    plt.figure(figsize=(17,17))
     for i in range(NB_IMAGES):
         plt.subplot(5,5,1+i)
         plt.axis('off')
